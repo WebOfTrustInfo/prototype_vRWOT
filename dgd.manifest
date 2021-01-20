@@ -8,15 +8,13 @@
     ],
     "unbundled_goods": [
         {
-            "name": "kernellib",
+            "name": "SkotOS DGD Code",
             "git": {
-                "url": "https://github.com/dworkin/cloud-server.git",
-                "branch": "master"
+                "url": "https://github.com/noahgibbs/SkotOS.git",
+                "branch": "thin_auth_integration"
             },
             "paths": {
-                "src/doc/kernel": "doc/kernel",
-                "src/include/kernel": "include/kernel",
-                "src/kernel": "kernel"
+                "skoot": "."
             }
         }
     ]
