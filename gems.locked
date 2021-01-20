@@ -1,0 +1,17 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    dgd-tools (0.1.4)
+      nokogiri (~> 1.10.5)
+    mini_portile2 (2.4.0)
+    nokogiri (1.10.10)
+      mini_portile2 (~> 2.4.0)
+
+PLATFORMS
+  ruby
+
+DEPENDENCIES
+  dgd-tools
+
+BUNDLED WITH
+   2.1.2
