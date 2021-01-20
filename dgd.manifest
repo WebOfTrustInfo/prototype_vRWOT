@@ -1,0 +1,23 @@
+{
+    "name": "Prototype vRWOT",
+    "version": "0.1.0",
+    "description": "A modified SkotOS server to accomodate group voice chat",
+    "app_root": "root",
+    "goods": [
+        "https://raw.githubusercontent.com/noahgibbs/dgd-tools/main/goods/skotos_httpd.goods"
+    ],
+    "unbundled_goods": [
+        {
+            "name": "kernellib",
+            "git": {
+                "url": "https://github.com/dworkin/cloud-server.git",
+                "branch": "master"
+            },
+            "paths": {
+                "src/doc/kernel": "doc/kernel",
+                "src/include/kernel": "include/kernel",
+                "src/kernel": "kernel"
+            }
+        }
+    ]
+}
