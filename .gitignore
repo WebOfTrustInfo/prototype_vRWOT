@@ -1,3 +1,4 @@
 # DGD Manifest files
 .root
 dgd.config
+state/*
