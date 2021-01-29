@@ -10,7 +10,7 @@
         {
             "name": "SkotOS DGD Code",
             "git": {
-                "url": "git@github.com:noahgibbs/vRWOT_SkotOS.git",
+                "url": "https://github.com/noahgibbs/vRWOT_SkotOS.git",
                 "branch": "thin_auth_integration"
             },
             "paths": {
