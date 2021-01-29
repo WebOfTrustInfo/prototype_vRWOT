@@ -20,6 +20,17 @@
 		addComponent('comp_sw', 'right_fill', 'comp_button', 'compassArrow', ['southwest'], false, 'go southwest');
 		addComponent('comp_s' , 'right_fill', 'comp_button', 'compassArrow', ['south'],     false, 'go south');
 		addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
+
+		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
+		const domain = 'meet.jit.si';  // Until we successfully self-host
+		const options = {
+		    roomName: 'RWOTTesting',
+		    width: 400,
+		    height: 400,
+		    parentNode: document.querySelector('#meet'),
+		    configOverwrite: { startWithAudioMuted: true },
+		};
+		const api = new JitsiMeetExternalAPI(domain, options);
 	}
 
 	function updateCompass(bitfield, image, dir, bit) {
