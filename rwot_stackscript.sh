@@ -8,14 +8,14 @@
 # RWOT_GIT_URL=
 # <UDF name="rwot_git_branch" label="RWOT's Git Branch" default="master" example="RWOT branch, tag or commit to clone for your game." optional="false" />
 # RWOT_GIT_BRANCH=
-# <UDF name="rwot_skotos_stackscript_url" label="URL for the base stackscript to build on" default="https://raw.githubusercontent.com/noahgibbs/vRWOT_SkotOS/master/dev_scripts/stackscript/linode_stackscript.sh" example="SkotOS stackscript to build on top of." optional="false" />
+# <UDF name="rwot_skotos_stackscript_url" label="URL for the base stackscript to build on" default="https://raw.githubusercontent.com/noahgibbs/vRWOT_SkotOS/rwot_prototype/dev_scripts/stackscript/linode_stackscript.sh" example="SkotOS stackscript to build on top of." optional="false" />
 # RWOT_SKOTOS_STACKSCRIPT_URL=
 
 set -e
 set -x
 
 # Output stdout and stderr to ~root files
-exec > >(tee -a /root/standup.log) 2> >(tee -a /root/standup.log /root/standup.err >&2)
+exec > >(tee -a /root/rwot_standup.log) 2> >(tee -a /root/rwot_standup.log /root/rwot_standup.err >&2)
 
 # e.g. clone_or_update "$SKOTOS_GIT_URL" "$SKOTOS_GIT_BRANCH" "/var/skotos"
 function clone_or_update {
@@ -50,8 +50,6 @@ export DGD_GIT_BRANCH=master
 export THINAUTH_GIT_URL=https://github.com/ChatTheatre/thin-auth
 export THINAUTH_GIT_BRANCH=master
 
-clone_or_update "$RWOT_GIT_URL" "$RWOT_GIT_BRANCH" /var/rwot
-
 if [ -z "$SKIP_INNER" ]
 then
     # Set up the node using the normal SkotOS Linode stackscript
@@ -59,13 +57,15 @@ then
     . ~root/linode_stackscript.sh
 fi
 
+clone_or_update "$RWOT_GIT_URL" "$RWOT_GIT_BRANCH" /var/rwot
+
 export FQDN_MEET=meet."$SUBDOMAIN"
 
 ufw allow 10000/udp # For Jitsi Meet server
 ufw allow 3478/udp # For STUN server
 ufw allow 5349/tcp # For fallback video/audio with coturn
 
-certbot --non-interactive --apache --agree-tos -m webmaster@$FQDN_CLIENT -d $FQDN_CLIENT -d $FQDN_LOGIN -d $FQDN_MEET
+certbot certonly --non-interactive --apache --agree-tos -m webmaster@$FQDN_CLIENT -d $FQDN_MEET
 
 # If we're still running then everything was set up correctly.
 
@@ -102,6 +102,44 @@ chown skotos /var/log/dgd_server.out
 cat >>~skotos/crontab.txt <<EndOfMessage
 * * * * *  /var/rwot/start_rwot_server.sh
 EndOfMessage
+
+cat >>/var/rwot/dgd.config <<EndOfMessage
+telnet_port = ([ "*": 10098 ]); /* telnet port for low-level game admin access */
+binary_port = ([ "*": 10099, /* admin-only emergency game access port */
+             "*": 10017,     /* UserAPI::Broadcast port */
+             "*": 10070,     /* UserDB Auth port - DO NOT EXPOSE THROUGH FIREWALL */
+             "*": 10071,     /* UserDB Ctl port - DO NOT EXPOSE THROUGH FIREWALL */
+             "*": 10080,     /* HTTP port */
+             "*": 10089,     /* DevSys HTTP port */
+             "*": 10090,     /* WOE port, relayed to by websockets */
+             "*": 10091,     /* DevSys ExportD port */
+             "*": 10443 ]);  /* TextIF port, relayed to by websockets */
+directory   = "./.root";
+users       = 100;
+editors     = 0;
+ed_tmpfile  = "../state/ed";
+swap_file   = "../state/swap";
+swap_size   = 1048576;      /* # sectors in swap file */
+cache_size  = 8192;         /* # sectors in swap cache */
+sector_size = 512;          /* swap sector size */
+swap_fragment   = 4096;         /* fragment to swap out */
+static_chunk    = 64512;        /* static memory chunk */
+dynamic_chunk   = 261120;       /* dynamic memory chunk */
+dump_interval   = 7200;         /* two hours between dumps */
+dump_file   = "../skotos.database";
+
+typechecking    = 2;            /* global typechecking */
+include_file    = "/include/std.h"; /* standard include file */
+include_dirs    = ({ "/include", "~/include" }); /* directories to search */
+auto_object = "/kernel/lib/auto";   /* auto inherited object */
+driver_object   = "/kernel/sys/driver"; /* driver object */
+create      = "_F_create";      /* name of create function */
+
+array_size  = 16384;        /* max array size */
+objects     = 300000;       /* max # of objects */
+call_outs   = 16384;        /* max # of call_outs */
+EndOfMessage
+chown skotos:skotos /var/rwot/dgd.config
 
 cat >~skotos/dgd_setup.sh <<EndOfMessage
 #!/bin/bash
