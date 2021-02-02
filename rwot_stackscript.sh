@@ -118,5 +118,6 @@ EndOfMessage
 chmod +x ~skotos/dgd_setup.sh
 sudo -u skotos ~skotos/dgd_setup.sh
 
+touch ~/rwot_stackscript_finished_successfully.txt
 
 # TODO: apt install jitsi-meet   # Will probably have questions and config...
