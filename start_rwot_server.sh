@@ -22,5 +22,5 @@ then
 	echo "RWOT DGD server is already running"
 else
 	echo "RWOT DGD server is not running - restarting"
-	$SKOTOS_CMD >>/var/log/dgd_server.out 2>&1 &
+	$SKOTOS_CMD >>/var/log/dgd/server.out 2>&1 &
 fi
