@@ -88,22 +88,42 @@ apt install adoptopenjdk-8-hotspot -y
 # dgd-tools contains dgd-manifest
 gem install dgd-tools bundler
 
-# Keep SkotOS DGD from being restarted by cron.
+# Keep SkotOS DGD from being restarted by normal script (which shouldn't run anyway.)
 touch /var/skotos/no_restart.txt
 # We'll shut down SkotOS's DGD server and set up our own RWOT-specific DGD app.
 /var/skotos/dev_scripts/stackscript/stop_dgd_server.sh
 
 # Reset the logfile
-rm -f /var/log/dgd_server.out
-touch /var/log/dgd_server.out
-chown skotos /var/log/dgd_server.out
+rm -f /var/log/dgd_server.out /var/log/dgd/server.out
 
-# Add entry to ~skotos/crontab.txt for RWOT SkotOS
-cat >>~skotos/crontab.txt <<EndOfMessage
-* * * * *  /var/rwot/start_rwot_server.sh
+touch /var/log/start_rwot_server.sh
+chown skotos /var/log/start_rwot_server.sh
+
+# Replace Crontab with just the pieces we need - specifically, do NOT start the old SkotOS DGD server any more.
+cat >~skotos/crontab.txt <<EndOfMessage
+@reboot /usr/local/websocket-to-tcp-tunnel/start-tunnel.sh
+* * * * * /usr/local/websocket-to-tcp-tunnel/search-tunnel.sh
+* * * * * /bin/bash -c "/var/www/html/user/admin/restartuserdb.sh >>/var/log/userdb/servers.txt"
+* * * * * /var/skotos/dev_scripts/stackscript/keep_authctl_running.sh
+1 5 1-2 * * /usr/bin/certbot renew
+* * * * *  /var/rwot/start_rwot_server.sh >>/var/log/start_rwot_server.sh
 EndOfMessage
+chown skotos ~skotos/crontab.txt
 
-# Modify files in /var/rwot
+cat >~skotos/dgd_pre_setup.sh <<EndOfMessage
+#!/bin/bash
+
+set -e
+set -x
+
+cd /var/rwot
+bundle install
+bundle exec dgd-manifest install
+EndOfMessage
+chmod +x ~skotos/dgd_pre_setup.sh
+sudo -u skotos ~skotos/dgd_pre_setup.sh
+
+# Modify files in /var/rwot after dgd-manifest has created the initial app directory
 
 # May need this for logging in on telnet port and/or admin-only emergency port
 DEVUSERD=/var/rwot/.root/usr/System/sys/devuserd.c
@@ -116,7 +136,7 @@ else
 fi
 
 # Fix the login URL
-HTTP_FILE=/var/skotos/skoot/usr/HTTP/sys/httpd.c
+HTTP_FILE=/var/rwot/.root/usr/HTTP/sys/httpd.c
 if grep -F "www.skotos.net/user/login.php" $HTTP_FILE
 then
     # Unpatched - need to patch
@@ -144,20 +164,49 @@ chown skotos:skotos /var/rwot/.root/usr/System/data/instance
 
 sed -i "s_hostname=\"localhost\"_hostname=\"$FQDN_CLIENT\"_" /var/rwot/.root/data/vault/Theatre/Theatres/Tavern.xml
 
-cat >~skotos/dgd_setup.sh <<EndOfMessage
-#!/bin/bash
+# Add vRWOT SkotOS config file
+cat >/var/rwot/skotos.config <<EndOfMessage
+telnet_port = ([ "*": 10098 ]); /* telnet port for low-level game admin access */
+binary_port = ([ "*": 10099, /* admin-only emergency game access port */
+             "*": 10017,     /* UserAPI::Broadcast port */
+             "*": 10070,     /* UserDB Auth port - DO NOT EXPOSE THROUGH FIREWALL */
+             "*": 10071,     /* UserDB Ctl port - DO NOT EXPOSE THROUGH FIREWALL */
+             "*": 10080,     /* HTTP port */
+             "*": 10089,     /* DevSys HTTP port */
+             "*": 10090,     /* WOE port, relayed to by websockets */
+             "*": 10091,     /* DevSys ExportD port */
+             "*": 10443 ]);  /* TextIF port, relayed to by websockets */
+directory   = "./.root";
+users       = 100;
+editors     = 0;
+ed_tmpfile  = "../state/ed";
+swap_file   = "../state/swap";
+swap_size   = 1048576;      /* # sectors in swap file */
+cache_size  = 8192;         /* # sectors in swap cache */
+sector_size = 512;          /* swap sector size */
+swap_fragment   = 4096;         /* fragment to swap out */
+static_chunk    = 64512;        /* static memory chunk */
+dynamic_chunk   = 261120;       /* dynamic memory chunk */
+dump_interval   = 7200;         /* two hours between dumps */
+dump_file   = "../skotos.database";
 
-set -e
-set -x
+typechecking    = 2;            /* global typechecking */
+include_file    = "/include/std.h"; /* standard include file */
+include_dirs    = ({ "/include", "~/include" }); /* directories to search */
+auto_object = "/kernel/lib/auto";   /* auto inherited object */
+driver_object   = "/kernel/sys/driver"; /* driver object */
+create      = "_F_create";      /* name of create function */
 
-cd /var/rwot
-bundle install
-bundle exec dgd-manifest install
+array_size  = 16384;        /* max array size */
+objects     = 300000;       /* max # of objects */
+call_outs   = 16384;        /* max # of call_outs */
+EndOfMessage
 
+cat >~skotos/dgd_final_setup.sh <<EndOfMessage
 crontab ~/crontab.txt
 EndOfMessage
-chmod +x ~skotos/dgd_setup.sh
-sudo -u skotos ~skotos/dgd_setup.sh
+chmod +x ~skotos/dgd_final_setup.sh
+sudo -u skotos ~skotos/dgd_final_setup.sh
 
 touch ~/rwot_stackscript_finished_successfully.txt
 
