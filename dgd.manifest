@@ -1,7 +1,7 @@
 {
     "name": "Prototype vRWOT",
     "version": "0.1.0",
-    "description": "A modified SkotOS server to accomodate group voice chat",
+    "description": "A modified SkotOS server to accommodate group voice chat",
     "app_root": "root",
     "goods": [
         "https://raw.githubusercontent.com/noahgibbs/dgd-tools/main/goods/skotos_httpd.goods"
