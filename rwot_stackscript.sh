@@ -202,6 +202,8 @@ objects     = 300000;       /* max # of objects */
 call_outs   = 16384;        /* max # of call_outs */
 EndOfMessage
 
+cp /var/www/html/client/profiles.js /var/rwot/.root/usr/Gables/data/www/
+
 cat >~skotos/dgd_final_setup.sh <<EndOfMessage
 crontab ~/crontab.txt
 EndOfMessage
