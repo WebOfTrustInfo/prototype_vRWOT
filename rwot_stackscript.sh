@@ -61,6 +61,10 @@ fi
 
 clone_or_update "$RWOT_GIT_URL" "$RWOT_GIT_BRANCH" /var/rwot
 
+# If we're running on an already-provisioned system, don't keep DGD running
+touch /var/rwot/no_restart.txt
+/var/rwot/stop_rwot_server.sh
+
 export FQDN_MEET=meet."$SUBDOMAIN"
 
 ufw allow 10000/udp # For Jitsi Meet server
@@ -111,6 +115,9 @@ cat >~skotos/crontab.txt <<EndOfMessage
 * * * * *  /var/rwot/start_rwot_server.sh >>/var/log/start_rwot_server.sh
 EndOfMessage
 chown skotos ~skotos/crontab.txt
+
+# In case we're re-running, don't keep statedump files around
+rm -f /var/rwot/skotos.database*
 
 cat >~skotos/dgd_pre_setup.sh <<EndOfMessage
 #!/bin/bash
@@ -222,6 +229,7 @@ chown skotos /var/rwot/.root/usr/Gables/data/www/profiles.js
 
 cat >~skotos/dgd_final_setup.sh <<EndOfMessage
 crontab ~/crontab.txt
+rm -f /var/rwot/no_restart.txt  # Just in case
 EndOfMessage
 chmod +x ~skotos/dgd_final_setup.sh
 sudo -u skotos ~skotos/dgd_final_setup.sh
