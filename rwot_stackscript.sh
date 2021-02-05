@@ -136,7 +136,7 @@ then
 else
     echo "/var/rwot DevUserD appears to be patched already. Moving on..."
 fi
-mkdir -p /var/rwot/usr/System/sys
+mkdir -p /var/rwot/root/usr/System/sys
 cp $DEVUSERD /var/rwot/root/usr/System/sys/
 chown skotos:skotos /var/rwot/root/usr/System/sys/devuserd.c
 
