@@ -123,7 +123,9 @@ EndOfMessage
 chmod +x ~skotos/dgd_pre_setup.sh
 sudo -u skotos ~skotos/dgd_pre_setup.sh
 
-# Modify files in /var/rwot after dgd-manifest has created the initial app directory
+# We modify files in /var/rwot/.root after dgd-manifest has created the initial app directory.
+# But we also copy those files into /var/rwot/root (note: no dot) so that if the user later
+# rebuilds with dgd-manifest, the modified files will be kept.
 
 # May need this for logging in on telnet port and/or admin-only emergency port
 DEVUSERD=/var/rwot/.root/usr/System/sys/devuserd.c
@@ -134,6 +136,9 @@ then
 else
     echo "/var/rwot DevUserD appears to be patched already. Moving on..."
 fi
+mkdir -p /var/rwot/usr/System/sys
+cp $DEVUSERD /var/rwot/root/usr/System/sys/
+chown skotos:skotos /var/rwot/root/usr/System/sys/devuserd.c
 
 # Fix the login URL
 HTTP_FILE=/var/rwot/.root/usr/HTTP/sys/httpd.c
@@ -144,6 +149,9 @@ then
 else
     echo "HTTPD appears to be patched already. Moving on..."
 fi
+mkdir -p /var/rwot/usr/HTTP/sys
+cp $HTTP_FILE /var/rwot/usr/HTTP/sys/
+chown skotos:skotos /var/rwot/usr/HTTP/sys/httpd.c
 
 # Instance file
 cat >/var/rwot/.root/usr/System/data/instance <<EndOfMessage
@@ -161,8 +169,11 @@ statedump_offset 600
 freemote +emote
 EndOfMessage
 chown skotos:skotos /var/rwot/.root/usr/System/data/instance
+cp /var/rwot/.root/usr/System/data/instance /var/rwot/root/usr/System/data/
+chown skotos:skotos /var/rwot/root/usr/System/data/instance
 
 sed -i "s_hostname=\"localhost\"_hostname=\"$FQDN_CLIENT\"_" /var/rwot/.root/data/vault/Theatre/Theatres/Tavern.xml
+sed -i "s_hostname=\"localhost\"_hostname=\"$FQDN_CLIENT\"_" /var/rwot/root/data/vault/Theatre/Theatres/Tavern.xml
 
 # Add vRWOT SkotOS config file
 cat >/var/rwot/skotos.config <<EndOfMessage
@@ -202,7 +213,10 @@ objects     = 300000;       /* max # of objects */
 call_outs   = 16384;        /* max # of call_outs */
 EndOfMessage
 
+cp /var/www/html/client/profiles.js /var/rwot/root/usr/Gables/data/www/ # in case of rebuild
+chown skotos /var/rwot/root/usr/Gables/data/www/profiles.js
 cp /var/www/html/client/profiles.js /var/rwot/.root/usr/Gables/data/www/
+chown skotos /var/rwot/.root/usr/Gables/data/www/profiles.js
 
 cat >~skotos/dgd_final_setup.sh <<EndOfMessage
 crontab ~/crontab.txt
