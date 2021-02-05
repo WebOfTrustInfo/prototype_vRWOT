@@ -49,6 +49,8 @@ export DGD_GIT_URL=https://github.com/ChatTheatre/dgd
 export DGD_GIT_BRANCH=master
 export THINAUTH_GIT_URL=https://github.com/ChatTheatre/thin-auth
 export THINAUTH_GIT_BRANCH=master
+export TUNNEL_GIT_URL=https://github.com/noahgibbs/websocket-to-tcp-tunnel
+export TUNNEL_GIT_BRANCH=wss_support
 
 if [ -z "$SKIP_INNER" ]
 then
