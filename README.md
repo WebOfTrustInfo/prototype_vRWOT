@@ -37,3 +37,21 @@ Sometimes you'll want to change files and restart DGD. DGD doesn't make this eas
 If you want to fully stop DGD, first go into /var/rwot (NOTE: /var/skotos on non-RWOT hosts) and touch no_restart.txt. Then run the stop script for the server (/var/rwot/stop_rwot_server.sh or /var/skotos/dev_scripts/stackscript/stop_dgd_server.sh). Remove the skotos.database file.
 
 This fully stops DGD, and removes all cached code and information. Next time you restart the server (by removing no_restart.txt and either waiting or manually starting it) you'll get a slow boot that rebuilds everything. Nothing will be cached. That's important if you want to change WOE objects by modifying their XML files, or DGD source files (.c and .h files.)
+
+Note: you may want to run "dgd-manifest install" after you stop DGD and before you restart it - see below.
+
+## Updating DGD Files
+
+This repo includes a lot of files under "root" to override existing DGD SkotOS files. If you just push a new commit, do a "git pull" on the prod machine and restart... It won't work.
+
+It won't work because those "root" files are built into a real DGD app by running "dgd-manifest install" in RWOT's directory. You really shouldn't do that while DGD is running. So you'll want to restart DGD as described above, but run "dgd-manifest install" while it's not running.
+
+## Jitsi Problems
+
+"Unknown property GetUserMedia"? You're not using HTTPS. Jitsi requires a secure connection.
+
+## "No urbodies" or Can't Find the Theatre
+
+You'll sometimes get problems where a white error dialog comes up instead of the next SkotOS page and it mentions "no urbodies" or that it can't find the Theatre.
+
+Often that means that the Host header of the HTTP request isn't being set correctly. Check your NGinX or Apache config and make sure the hostname matches the hostname you gave when configuring, or that you haven't otherwised changed what SkotOS thinks the hostname is.
