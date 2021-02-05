@@ -22,6 +22,8 @@ The existing DNS entries will normally work fine unless you create a new Linode.
 
 * Change Jekyll \_config.yml for final location - not under "noahgibbs"
 
+* Consider doing the no_restart.txt thing automatically in the scripts. Stopping the server would mean keeping it stopped (no cron restart), starting it would mean removing no_restart.txt. Too much?
+
 # Linode Debugging Docs
 
 A lot of these should move into SkotOS-Doc when we move the appropriate SkotOS changes over.
