@@ -50,7 +50,7 @@ export DGD_GIT_BRANCH=master
 export THINAUTH_GIT_URL=https://github.com/ChatTheatre/thin-auth
 export THINAUTH_GIT_BRANCH=master
 export TUNNEL_GIT_URL=https://github.com/noahgibbs/websocket-to-tcp-tunnel
-export TUNNEL_GIT_BRANCH=wss_support
+export TUNNEL_GIT_BRANCH=script_improvements
 
 if [ -z "$SKIP_INNER" ]
 then
