@@ -96,7 +96,11 @@ echo "jitsi-meet jitsi-meet/cert-choice select Self-signed certificate will be g
 export DEBIAN_FRONTEND=noninteractive
 apt install jitsi-meet -y
 
-# Jitsi adds some NGinX sites, which means we need to tell NGinX to load them.
+# In case we're re-running
+rm -f /etc/nginx/sites-enabled/${FQDN_MEET}.conf
+ln -s /etc/nginx/sites-available/${FQDN_MEET}.conf /etc/nginx/sites-enabled/${FQDN_MEET}.conf
+
+# Jitsi adds an NGinX site, which means we need to tell NGinX to load it.
 nginx -t
 nginx -s reload
 
