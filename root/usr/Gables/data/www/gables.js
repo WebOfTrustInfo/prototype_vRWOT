@@ -37,8 +37,8 @@
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
 		const options = {
 		    roomName: 'RWOTTesting',
-		    width: 100,
-		    height: 100,
+		    width: 200,
+		    height: 400,
 		    parentNode: document.querySelector('#meet'),
 		    configOverwrite: { startAudioOnly: true },
 		    userInfo: {
