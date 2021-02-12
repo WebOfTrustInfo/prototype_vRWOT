@@ -73,9 +73,6 @@ ufw allow 5349/tcp # For fallback video/audio with coturn
 
 certbot certonly --non-interactive --apache --agree-tos -m webmaster@$FQDN_CLIENT -d $FQDN_MEET
 
-# Switch Jitsi-meet to using Certbot certificates
-/usr/share/jitsi-meet/scripts/install-letsencrypt-cert.sh
-
 # If we're still running then everything was set up correctly.
 
 apt install gnupg2 apt-transport-https -y
@@ -93,6 +90,14 @@ echo 'deb [signed-by=/usr/share/keyrings/jitsi-keyring.gpg] https://download.jit
 
 apt update
 apt install adoptopenjdk-8-hotspot -y
+
+echo "jitsi-videobridge jitsi-videobridge/jvb-hostname string $FQDN_MEET" | debconf-set-selections
+echo "jitsi-meet jitsi-meet/cert-choice select Self-signed certificate will be generated" | debconf-set-selections
+export DEBIAN_FRONTEND=noninteractive
+apt install jitsi-meet -y
+
+# Switch Jitsi-meet to using Certbot certificates
+echo "admin@$FQDN_CLIENT" | /usr/share/jitsi-meet/scripts/install-letsencrypt-cert.sh
 
 # dgd-tools contains dgd-manifest
 gem install dgd-tools bundler
@@ -238,5 +243,3 @@ chmod +x ~skotos/dgd_final_setup.sh
 sudo -u skotos ~skotos/dgd_final_setup.sh
 
 touch ~/rwot_stackscript_finished_successfully.txt
-
-# TODO: apt install jitsi-meet   # Will probably have questions and config...
