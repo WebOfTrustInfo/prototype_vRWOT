@@ -73,6 +73,9 @@ ufw allow 5349/tcp # For fallback video/audio with coturn
 
 certbot certonly --non-interactive --apache --agree-tos -m webmaster@$FQDN_CLIENT -d $FQDN_MEET
 
+# Switch Jitsi-meet to using Certbot certificates
+/usr/share/jitsi-meet/scripts/install-letsencrypt-cert.sh
+
 # If we're still running then everything was set up correctly.
 
 apt install gnupg2 apt-transport-https -y
