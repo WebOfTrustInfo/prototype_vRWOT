@@ -96,6 +96,10 @@ echo "jitsi-meet jitsi-meet/cert-choice select Self-signed certificate will be g
 export DEBIAN_FRONTEND=noninteractive
 apt install jitsi-meet -y
 
+# Jitsi adds some NGinX sites, which means we need to tell NGinX to load them.
+nginx -t
+nginx -s reload
+
 # Switch Jitsi-meet to using Certbot certificates
 echo "admin@$FQDN_CLIENT" | /usr/share/jitsi-meet/scripts/install-letsencrypt-cert.sh
 
