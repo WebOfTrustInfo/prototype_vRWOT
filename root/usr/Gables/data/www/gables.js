@@ -35,6 +35,7 @@
 	}
 	function setupJitsi() {
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
+		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
 		    roomName: 'RWOTTesting',
 		    width: 200,
