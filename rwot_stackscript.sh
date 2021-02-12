@@ -71,7 +71,7 @@ ufw allow 10000/udp # For Jitsi Meet server
 ufw allow 3478/udp # For STUN server
 ufw allow 5349/tcp # For fallback video/audio with coturn
 
-certbot certonly --non-interactive --apache --agree-tos -m webmaster@$FQDN_CLIENT -d $FQDN_MEET
+certbot certonly --non-interactive --nginx --agree-tos -m webmaster@$FQDN_CLIENT -d $FQDN_MEET
 
 # If we're still running then everything was set up correctly.
 
