@@ -3,6 +3,7 @@
 	var bigMapHREF;
 	var userName;
 	var jitsiDomain;
+	var jitsiIsSetUp;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
@@ -30,6 +31,7 @@
 		script.type = 'text/javascript';
 		script.src = 'https://' + jitsiDomain + '/external_api.js';
                 document.head.appendChild(script);
+                jitsiIsSetUp = false;
 	}
 	function setupJitsi() {
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
@@ -103,6 +105,8 @@
 			break;
 		case 21:
 			// Before our username, msg contains a user ID we don't keep track of
+			if(jitsiIsSetUp) break;
+			jitsiIsSetUp = true;
 			var pos = msg.indexOf(" ");
 			userName = msg.substring(pos);
 			console.log("SkotOS user name: " + userName);
