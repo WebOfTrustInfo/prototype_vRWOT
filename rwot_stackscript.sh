@@ -107,8 +107,8 @@ touch /var/skotos/no_restart.txt
 # We'll shut down SkotOS's DGD server and set up our own RWOT-specific DGD app.
 /var/skotos/dev_scripts/stackscript/stop_dgd_server.sh
 
-# Reset the logfile
-rm -f /var/log/dgd_server.out /var/log/dgd/server.out
+# Reset the logfile and DGD database
+rm -f /var/log/dgd_server.out /var/log/dgd/server.out /var/skotos/skotos.database /var/skotos/skotos.database.old
 
 touch /var/log/start_rwot_server.sh
 chown skotos /var/log/start_rwot_server.sh
