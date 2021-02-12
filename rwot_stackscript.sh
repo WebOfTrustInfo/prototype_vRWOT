@@ -177,7 +177,7 @@ hostname $FQDN_CLIENT
 bootmods DevSys Theatre Jonkichi Tool Generic SMTP UserDB Gables
 textport 443
 real_textport 10443
-webport 10080
+webport 10803
 real_webport 10080
 access gables
 memory_high 128
