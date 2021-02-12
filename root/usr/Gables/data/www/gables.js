@@ -38,8 +38,8 @@
 		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
 		    roomName: 'RWOTTesting',
-		    width: 200,
-		    height: 400,
+		    width: 600,
+		    height: 300,
 		    parentNode: document.querySelector('#meet'),
 		    configOverwrite: { startAudioOnly: true },
 		    userInfo: {
