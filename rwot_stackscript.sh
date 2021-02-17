@@ -238,7 +238,25 @@ objects     = 300000;       /* max # of objects */
 call_outs   = 16384;        /* max # of call_outs */
 EndOfMessage
 
-cp /var/www/html/client/profiles.js /var/rwot/root/usr/Gables/data/www/ # in case of rebuild
+cat >/var/www/html/client/profiles.js <<EndOfMessage
+"use strict";
+// orchil/profiles.js
+var profiles = {
+        "portal_gables":{
+                "method":   "websocket",
+                "protocol": "wss",
+                "server":   "$FQDN_CLIENT",
+                "port":      10810,
+                "woe_port":  10812,
+                "http_port": 10803,
+                "path":     "/gables",
+                "extra":    "",
+                "reports":   false,
+                "chars":    true,
+        }
+};
+EndOfMessage
+cp /var/www/html/client/profiles.js /var/rwot/root/usr/Gables/data/www/
 chown skotos /var/rwot/root/usr/Gables/data/www/profiles.js
 cp /var/www/html/client/profiles.js /var/rwot/.root/usr/Gables/data/www/
 chown skotos /var/rwot/.root/usr/Gables/data/www/profiles.js
