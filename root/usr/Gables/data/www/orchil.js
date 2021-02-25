@@ -1,5 +1,5 @@
 "use strict";
-var conn, output, input, debugtrack, gameCharacter, generic, hasChars;
+var conn, output, input, debugtrack, gameCharacter, generic, hasChars, http_port;
 var c = {};
 //-----Protocol Code
 	function initAJAX(profile) {
@@ -63,6 +63,8 @@ var c = {};
 		if(profile.chars == true) {
 			hasChars = true;
 		}
+        
+        if(profile.http_port) http_port = profile.http_port;
 		
 		var wsuri = profile.protocol + "://" + profile.server + ":" + profile.port + profile.path;
 
@@ -379,11 +381,24 @@ var c = {};
 					}
 				}
 			},
+			background_color: {
+				cat: "styling",
+				type: ["color", "noquotes"],
+				desc: "A custom background color.  Color names or hex codes may be used.",
+				def: "",
+				onChange: function(old) {
+					var x = prefs.background_color.replace(/['"]+/g, '');
+					if (x) {
+						x = "#output { background-color:" + x + " !important;}"
+						cssMods.background_color = setStyle(x, cssMods.background_color);
+					}
+				}
+			},
 			theme: {
 				cat: "styling",
 				type: ["options"],
 				desc: "The colors and styles used for text.",
-				def: "dark",
+				def: "light",
 				opt: {
 					light: "A light background wtih dark text.  The standard Skotos appearance.",
 					dark: "A dark background with light text.  Considered by many to be easier on the eyes.",
@@ -504,18 +519,22 @@ var c = {};
 			hide_sidebar: {
 				cat: "layout",
 				type: ["options"],
-				desc: "Whether to hide one of the sidebars.",
+				desc: "Whether to hide one or both of the sidebars.",
 				def: "none",
 				opt: {
 					none: "Show both sidebars.",
 					auto: "Automatically hide the left sidebar if the client is very narrow.  Not yet implemented.",
 					left: "Hide the left sidebar.",
-					right: "Hide the right sidebar."
+					right: "Hide the right sidebar.",
+					both: "Hide both sidebars."
 				},
 				onChange: function(old) {
 					var x = "";
 					var y = "";
-					if (prefs.hide_sidebar=="left"||prefs.hide_sidebar=="right") {
+					if (prefs.hide_sidebar=="both") {
+						x = "#left, #right {display:none;}";
+						y = "#core {max-width: 100%;}";
+					} else if (prefs.hide_sidebar=="left"||prefs.hide_sidebar=="right") {
 						x = "#"+prefs.hide_sidebar+" {display:none;}";
 						y = "#core {max-width: calc(100% - "+document.getElementById("right").offsetWidth+"px)}";
 					}
@@ -1428,7 +1447,7 @@ var c = {};
 			case 'ALICECOMPAT': //What the servers support by default.
 				parseAliceCompat(line, nonl);
 				break;
-			case 'PRE': //Temporarily in a PRE tag.
+			case 'PRE': //Temporarily in a PRE tag; this seems unused.
 				parsePreTag(line, nonl);
 				break;
 			default:
@@ -1492,12 +1511,6 @@ var c = {};
 			plog("Removed one subelement.", currentSubElements);
 			pos--;
 		}
-		//Dead code, remove later.
-		//if(currentSubElements.length && ["PRE","UL","OL"].indexOf(currentSubElements[0].tagName) !== -1) {
-		//	currentSubElements = [currentSubElements[0]];
-		//} else {
-		//	currentSubElements = [];
-		//}
 	}
 	function closeAllSubElements() {
 		currentSubElements.splice(0);
@@ -1674,7 +1687,6 @@ var c = {};
                             console.log("gen" + gencolors[attr]);
 				return {"class":"gen"+gencolors[attr]};
 			}
-            console.log("Color" + attr);
 			return {"style":"color:"+attr};
 		}
 		if (attr.substring(0,6)==="class=") {
@@ -1695,9 +1707,9 @@ var c = {};
 		return {};
 	}
 	function stripQuotes(txt) {
-		var e = txt.length - 1;
+		var e = txt.length;
 		var s = (txt.charAt(0)==='"' || txt.charAt(0)==="'") ? 1 : 0;
-		e = (txt.charAt(e)==='"' || txt.charAt(e)==="'") ? e : e -1;
+		e = (txt.charAt(e-1)==='"' || txt.charAt(e-1)==="'") ? e - 1 : e;
 		return txt.substring(s, e);
 	}
 	function newLineElement(type /*="div"*/, cls) {
