@@ -31,7 +31,7 @@
 		script.type = 'text/javascript';
 		script.src = 'https://' + jitsiDomain + '/external_api.js';
                 document.head.appendChild(script);
-                jitsiIsSetUp = false;
+                setupJitsi();
 	}
 	function setupJitsi() {
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
@@ -43,7 +43,7 @@
 		    parentNode: document.querySelector('#meet'),
 		    configOverwrite: { startAudioOnly: true },
 		    userInfo: {
-		        displayName: userName
+		        displayName: loadCookie("user")
 		    }
 		};
 		const api = new JitsiMeetExternalAPI(jitsiDomain, options);
@@ -105,13 +105,7 @@
 			showHVMapLinks(msg);
 			break;
 		case 21:
-			// Before our username, msg contains a user ID we don't keep track of
-			if(jitsiIsSetUp) break;
-			jitsiIsSetUp = true;
-			var pos = msg.indexOf(" ");
-			userName = msg.substring(pos);
-			console.log("SkotOS user name: " + userName);
-			setupJitsi();
+			// This is for a player or similar creature entering
 			break;
 		case 70:
 	   		popupWin(msg, "SkotosToolSourceView", 800, 600);
