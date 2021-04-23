@@ -37,7 +37,7 @@
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
 		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
-		    roomName: 'GablesTop',
+		    roomName: 'RWOTTesting',
 		    width: 600,
 		    height: 300,
 		    parentNode: document.querySelector('#meet'),
