@@ -23,7 +23,7 @@
 		addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
 
 		if(window.location.hostname != "localhost") {
-			jitsiDomain = window.location.hostname.replace("gables.", "meet.");
+			jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
 
 			// Add the Jitsi external_api script for our correct domain
 			var script = document.createElement('script');
