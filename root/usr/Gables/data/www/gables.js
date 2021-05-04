@@ -30,6 +30,7 @@
 			script.type = 'text/javascript';
 			script.src = 'https://' + jitsiDomain + '/external_api.js';
                 	document.head.appendChild(script);
+
 			// If Jitsi fails for some reason, that should not block the
 			// text-only connection from being established properly.
 			setTimeout(setupJitsi);
