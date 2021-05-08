@@ -3,7 +3,7 @@
 set -e
 set -x
 
-DGD_PID=$(ps aux | grep "/var/dgd/bin/dgd skotos.config" | grep -v grep | cut -c 9-14)
+DGD_PID=$(pgrep -f "/var/dgd/bin/dgd dgd.config") || echo "DGD wasn't running, good"
 if [ -z "$DGD_PID" ]
 then
     echo "DGD does not appear to be running. Good."

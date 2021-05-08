@@ -1,6 +1,7 @@
 "use strict";
 //-----Component Setup
 	var bigMapHREF;
+	var jitsiDomain;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
@@ -21,16 +22,34 @@
 		addComponent('comp_s' , 'right_fill', 'comp_button', 'compassArrow', ['south'],     false, 'go south');
 		addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
 
+		if(window.location.hostname != "localhost") {
+			jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
+
+			// Add the Jitsi external_api script for our correct domain
+			var script = document.createElement('script');
+			script.type = 'text/javascript';
+			script.src = 'https://' + jitsiDomain + '/external_api.js';
+                	document.head.appendChild(script);
+
+			// If Jitsi fails for some reason, that should not block the
+			// text-only connection from being established properly.
+			script.onload = setupJitsi;
+		}
+	}
+	function setupJitsi() {
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
-		const domain = 'meet.jit.si';  // Until we successfully self-host
+		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
 		    roomName: 'RWOTTesting',
-		    width: 400,
-		    height: 400,
+		    width: 600,
+		    height: 300,
 		    parentNode: document.querySelector('#meet'),
-		    configOverwrite: { startWithAudioMuted: true },
+		    configOverwrite: { startAudioOnly: true },
+		    userInfo: {
+		        displayName: loadCookie("user")
+		    }
 		};
-		const api = new JitsiMeetExternalAPI(domain, options);
+		const api = new JitsiMeetExternalAPI(jitsiDomain, options);
 	}
 
 	function updateCompass(bitfield, image, dir, bit) {
@@ -74,10 +93,7 @@
 	   		updateCompass(msg, document.getElementById("comp_nw"), "nw", 128);
 			break;
 		case 6:
-			// Annoyingly, the URL for the popup is LPC-generated. That means
-			// it will sometimes have an "http://localhost/" in front which
-			// ignores the port number. Argh.
-			popupWin(msg.replace("http://localhost/", "http://localhost:10800/"), "SkotosAnyURL", 800, 600);
+			popupWin(msg, "SkotosAnyURL", 800, 600);
 			break;
 		case 7:
 			showCompass(msg);
@@ -90,6 +106,9 @@
 			break;
 		case 10:
 			showHVMapLinks(msg);
+			break;
+		case 21:
+			// This is for a player or similar creature entering
 			break;
 		case 70:
 	   		popupWin(msg, "SkotosToolSourceView", 800, 600);

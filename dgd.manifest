@@ -1,17 +1,20 @@
 {
     "name": "Prototype vRWOT",
     "version": "0.1.0",
-    "description": "A modified SkotOS server to accommodate group voice chat",
-    "app_root": "root",
-    "goods": [
-        "https://raw.githubusercontent.com/noahgibbs/dgd-tools/main/goods/skotos_httpd.goods"
-    ],
+    "description": "A virtual meeting place",
+    "config": {
+      "app_root": "root",
+      "editors": 0,
+      "telnet_ports": [10098],
+      "ports": [10099, 10017, 10070, 10071, 10080, 10089, 10090, 10091, 10443],
+      "dump_file": "skotos.database"
+    },
     "unbundled_goods": [
         {
-            "name": "SkotOS DGD Code",
+            "name": "SkotOS",
             "git": {
-                "url": "https://github.com/noahgibbs/vRWOT_SkotOS.git",
-                "branch": "rwot_prototype"
+                "url": "https://github.com/ChatTheatre/SkotOS.git",
+                "branch": "master"
             },
             "paths": {
                 "skoot": "."
