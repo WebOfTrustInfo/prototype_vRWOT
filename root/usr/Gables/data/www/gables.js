@@ -67,6 +67,7 @@
 
 	// If you call this yourself, it messes things up. Please don't.
 	function updateAudioInputs(devices) {
+		console.log("Updating audio input device list...");
 		var selector = document.querySelector('#audio_input_devices');
 		while(selector.size > 0) { selector.remove(0); }
 		devices.audioInput.forEach(dev => {
