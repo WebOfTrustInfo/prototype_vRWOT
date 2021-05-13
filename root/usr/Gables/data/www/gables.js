@@ -72,7 +72,11 @@
 		devices.audioInput.forEach(dev => {
 			var opt = document.createElement('option');
 			opt.value = dev.label;
-			opt.text = dev.label;
+			if(dev.label.length > 10) {
+				opt.text = dev.label.slice(0,9) + "...";
+			} else {
+				opt.text = dev.label;
+			}
 			opt.deviceId = dev.deviceId;
 			selector.add(opt);
 			});
