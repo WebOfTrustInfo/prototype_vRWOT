@@ -1,7 +1,8 @@
 "use strict";
 //-----Component Setup
 	var bigMapHREF;
-	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI, jitsiMidMute;
+	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI;
+	var jitsiMidMute, jitsiAddedAudioInputListener;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
@@ -11,7 +12,7 @@
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
 		addComponent('audio_chat'     , 'right'   , 'audio_chat', 'muteUnmute', [], '<div class="button"><i id="mute_button" class="muted fas fa-microphone-alt-slash"></i>Audio Chat</div>');
-		addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select><value>(Audio Input)</value></div>');
+		addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select id="audio_input_devices"><option>(Audio Input)</option></div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
@@ -26,6 +27,7 @@
 
 		jitsiLoaded = false;
 		jitsiMidMute = false;
+		jitsiAddedAudioInputListener = false;
 		if(window.location.hostname != "localhost") {
 			jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
 			jitsiServerMuted = false;
@@ -60,6 +62,26 @@
 		    }
 		};
 		jitsiAPI = new JitsiMeetExternalAPI(jitsiDomain, options);
+		jitsiAPI.getAvailableDevices().then(devices => updateAudioInputs(devices));
+	}
+
+	// If you call this yourself, it messes things up. Please don't.
+	function updateAudioInputs(devices) {
+		var selector = document.querySelector('#audio_input_devices');
+		while(selector.size > 0) { selector.remove(0); }
+		devices.audioInput.forEach(dev => {
+			var opt = document.createElement('option');
+			opt.value = dev.label;
+			opt.text = dev.label;
+			opt.deviceId = dev.deviceId;
+			selector.add(opt);
+			});
+		if(!jitsiAddedAudioInputListener) {
+			jitsiAddedAudioInputListener = true;
+			selector.addEventListener('change', (event) => {
+				jitsiAPI.setAudioInputDevice(selector.value);
+			});
+		}
 	}
 
 	function muteUnmute() {
