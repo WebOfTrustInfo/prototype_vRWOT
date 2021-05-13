@@ -18,11 +18,11 @@
 	#comp_se {right:1px;	bottom:12px;}
 
 #mute_button.muted: {
-	color: #222;
+	color: #444;
 }
 
 #mute_button.unmuted {
-	color: #EEE;
+	color: #DDD;
 }
 
 #map_area {border: 1px solid  #666666; background: rgba(0, 0, 0, 0.5); overflow:hidden; margin:7px auto; width: 120px; height: 120px; position:relative;}
