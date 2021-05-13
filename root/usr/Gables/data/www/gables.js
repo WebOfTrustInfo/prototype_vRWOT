@@ -12,7 +12,7 @@
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
 		addComponent('audio_chat'     , 'right'   , 'audio_chat', 'muteUnmute', [], '<div class="button"><i id="mute_button" class="muted fas fa-microphone-alt-slash"></i>Audio Chat</div>');
-		addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select id="audio_input_devices"><option>(Audio Input)</option></div>');
+		addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select id="audio_input_devices"></div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
@@ -69,7 +69,7 @@
 	function updateAudioInputs(devices) {
 		console.log("Updating audio input device list...");
 		var selector = document.querySelector('#audio_input_devices');
-		while(selector.size > 0) { selector.remove(0); }
+		while(selector.options.length > 0) { selector.remove(0); }
 		devices.audioInput.forEach(dev => {
 			var opt = document.createElement('option');
 			opt.value = dev.label;
@@ -85,6 +85,7 @@
 		if(!jitsiAddedAudioInputListener) {
 			jitsiAddedAudioInputListener = true;
 			selector.addEventListener('change', (event) => {
+				console.log("Audio input device selector: changed");
 				if(selector.value != jitsiLastAudioDevice) {
 					console.log("Setting Jitsi audio input: " + selector.value)
 					jitsiAPI.setAudioInputDevice(selector.value);
