@@ -72,6 +72,7 @@
 		devices.audioInput.forEach(dev => {
 			var opt = document.createElement('option');
 			opt.value = dev.label;
+			opt.title = dev.label;
 			if(dev.label.length > 10) {
 				opt.text = dev.label.slice(0,9) + "...";
 			} else {
@@ -83,6 +84,7 @@
 		if(!jitsiAddedAudioInputListener) {
 			jitsiAddedAudioInputListener = true;
 			selector.addEventListener('change', (event) => {
+				console.log("Setting Jitsi audio input: " + selector.value)
 				jitsiAPI.setAudioInputDevice(selector.value);
 			});
 		}
