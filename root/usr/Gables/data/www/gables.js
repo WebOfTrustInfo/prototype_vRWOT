@@ -2,7 +2,7 @@
 //-----Component Setup
 	var bigMapHREF;
 	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI;
-	var jitsiMidMute, jitsiAddedAudioInputListener;
+	var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
@@ -84,8 +84,13 @@
 		if(!jitsiAddedAudioInputListener) {
 			jitsiAddedAudioInputListener = true;
 			selector.addEventListener('change', (event) => {
-				console.log("Setting Jitsi audio input: " + selector.value)
-				jitsiAPI.setAudioInputDevice(selector.value);
+				if(selector.value != jitsiLastAudioDevice) {
+					console.log("Setting Jitsi audio input: " + selector.value)
+					jitsiAPI.setAudioInputDevice(selector.value);
+					jitsiLastAudioDevice = selector.value;
+				} else {
+					console.log("Audio device not changed from " + jitsiLastAudioDevice + ", not setting...");
+				}
 			});
 		}
 	}
