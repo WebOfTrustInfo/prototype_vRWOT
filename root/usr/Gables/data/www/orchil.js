@@ -71,7 +71,7 @@ var c = {};
 
 		var wsuri = profile.protocol + "://" + profile.server + ":" + profile.port + profile.path;
 		printUnscreened("Starting connection to: " + wsuri, "connection debug");
-		printUnscreened("Note: starting with audio chat muted, make sure you can see the right sidebar for audio controls.");
+		printUnscreened("Note: starting with audio chat muted, make sure you can see the right sidebar for audio controls.", "connection debug");
 		try {
 			conn = new WebSocket(wsuri);
 		} catch (e) {
