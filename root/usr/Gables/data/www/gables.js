@@ -427,5 +427,11 @@
 		// Just in case it was already open and not at the foreground.
 		artwin.focus();
     }
+
+    var parentDisconnected = connDisconnected;
+    function connDisconnected() {
+    	jitsiAPI.dispose();
+    	parentDisconnected();
+    }
 //-----Initialization Code
 	var serverCode = "CM";
