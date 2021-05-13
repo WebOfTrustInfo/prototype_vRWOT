@@ -19,6 +19,15 @@
 
 #map_area {border: 1px solid  #666666; background: rgba(0, 0, 0, 0.5); overflow:hidden; margin:7px auto; width: 120px; height: 120px; position:relative;}
 
+/* Normally this will be overridden, but it needs to be opaque */
+#mainclient: {
+	background-color: #fff;
+}
+#meet {
+	position: absolute;
+	z-index: -5;
+}
+
 .button {
 	width: 130px;
 	display:inline-block;

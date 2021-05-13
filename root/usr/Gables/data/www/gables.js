@@ -10,6 +10,7 @@
 		addComponent('settings_button', 'clientui', false, 'openSettings', [], '<i class="fas fa-bars"></i>', 'Client Preferences');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
+		addComponent('audio_chat'     , 'right'   , 'audio_chat', false, false, '<div>Audio Chat</div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
