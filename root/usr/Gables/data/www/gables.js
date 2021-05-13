@@ -1,7 +1,7 @@
 "use strict";
 //-----Component Setup
 	var bigMapHREF;
-	var jitsiDomain;
+	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
@@ -10,7 +10,7 @@
 		addComponent('settings_button', 'clientui', false, 'openSettings', [], '<i class="fas fa-bars"></i>', 'Client Preferences');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
-		addComponent('audio_chat'     , 'right'   , 'audio_chat', false, false, '<div>Audio Chat</div>');
+		addComponent('audio_chat'     , 'right'   , 'audio_chat', false, false, '<div><i id="mute_button" class="fas fa-microphone-alt"></i>Audio Chat </div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
@@ -23,8 +23,13 @@
 		addComponent('comp_s' , 'right_fill', 'comp_button', 'compassArrow', ['south'],     false, 'go south');
 		addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
 
+		jitsiLoaded = false;
 		if(window.location.hostname != "localhost") {
 			jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
+			jitsiServerMuted = false;
+			jitsiClientMuted = true;
+			jitsiRoom = "Lobby";
+			jitsiNickname = loadCookie("user");
 
 			// Add the Jitsi external_api script for our correct domain
 			var script = document.createElement('script');
@@ -35,19 +40,21 @@
 			// If Jitsi fails for some reason, that should not block the
 			// text-only connection from being established properly.
 			script.onload = setupJitsi;
+		} else {
+			// What do we do for local development?
 		}
 	}
 	function setupJitsi() {
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
 		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
-		    roomName: 'RWOTTesting',
-		    width: 600,
-		    height: 300,
+		    roomName: jitsiRoom,
+		    width: 200,
+		    height: 200,
 		    parentNode: document.querySelector('#meet'),
-		    configOverwrite: { startAudioOnly: true },
+		    configOverwrite: { startAudioOnly: true, startWithAudioMuted: true },
 		    userInfo: {
-		        displayName: loadCookie("user")
+		        displayName: jitsiNickname
 		    }
 		};
 		const api = new JitsiMeetExternalAPI(jitsiDomain, options);
