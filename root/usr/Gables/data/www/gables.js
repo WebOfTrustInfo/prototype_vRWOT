@@ -1,7 +1,7 @@
 "use strict";
 //-----Component Setup
 	var bigMapHREF;
-	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded;
+	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
@@ -10,7 +10,7 @@
 		addComponent('settings_button', 'clientui', false, 'openSettings', [], '<i class="fas fa-bars"></i>', 'Client Preferences');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
-		addComponent('audio_chat'     , 'right'   , 'audio_chat', false, false, '<div><i id="mute_button" class="fas fa-microphone-alt"></i>Audio Chat </div>');
+		addComponent('audio_chat'     , 'right'   , 'audio_chat', 'muteUnmute', false, '<div class="button"><i id="mute_button" class="muted fas fa-microphone-alt-slash"></i>Audio Chat</div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
@@ -57,7 +57,17 @@
 		        displayName: jitsiNickname
 		    }
 		};
-		const api = new JitsiMeetExternalAPI(jitsiDomain, options);
+		jitsiAPI = new JitsiMeetExternalAPI(jitsiDomain, options);
+	}
+
+	function muteUnmute() {
+		jitsiClientMuted = !jitsiClientMuted;
+		let muteButton = document.querySelector('#mute_button');
+		if(jitsiClientMuted) {
+			muteButton.classList = "muted fas fa-microphone-alt-slash";
+		} else {
+			muteButton.classList = "unmuted fas fa-microphone-alt";
+		}
 	}
 
 	function updateCompass(bitfield, image, dir, bit) {
