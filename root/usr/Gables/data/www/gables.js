@@ -11,6 +11,7 @@
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
 		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
 		addComponent('audio_chat'     , 'right'   , 'audio_chat', 'muteUnmute', [], '<div class="button"><i id="mute_button" class="muted fas fa-microphone-alt-slash"></i>Audio Chat</div>');
+		addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select><value>(Audio Input)</value></div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
