@@ -5,17 +5,18 @@ var parentDisconnected = connDisconnected;
 
 //-----Component Setup
 	var bigMapHREF;
-	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI;
-	var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice;
+	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAP, jitsiCurrentRoom;
+	var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice, jitsiRoomPrefix;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
 		addComponent('clientui'       , 'skotos_logo');
 		addComponent('save_button'  , 'clientui', false, 'saveCurrentWindow', [], '<i class="fas fa-file-download"></i>', 'Save Log');
 		addComponent('settings_button', 'clientui', false, 'openSettings', [], '<i class="fas fa-bars"></i>', 'Client Preferences');
-		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
-		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
-		addComponent('audio_chat'     , 'right'   , 'audio_chat', 'muteUnmute', [], '<div class="button"><i id="mute_button" class="muted fas fa-microphone-alt-slash"></i>Audio Chat</div>');
+		addComponent('newplayersgs'   , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
+		addComponent('newplayersmc'   , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
+		addComponent('audio_chat'     , 'right'   , false, 'toggleClientMuted', [], '<div class="button"><i id="mute_button" title="microphone shows whether you have muted yourself" class="muted fas fa-microphone-alt-slash"></i><span id="chat_indicator" title="text color shows whether server has muted you...">Audio Chat</span></div>');
+		addComponent('audio_roomtext' , 'right'   , false, false, [], '<div class="button">Room: <span id="audio_room"></span</div>');
 		//addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select id="audio_input_devices"></div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
@@ -29,43 +30,60 @@ var parentDisconnected = connDisconnected;
 		addComponent('comp_s' , 'right_fill', 'comp_button', 'compassArrow', ['south'],     false, 'go south');
 		addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
 
+		initJitsi();
+	}
+
+	function initJitsi() {
 		jitsiLoaded = false;
 		jitsiMidMute = false;
 		jitsiAddedAudioInputListener = false;
+		jitsiServerMuted = false;
+		jitsiClientMuted = true;
+		jitsiRoom = "RWOTLobby";
+		jitsiNickname = loadCookie("user");
+
 		if(window.location.hostname != "localhost") {
 			jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
-			jitsiServerMuted = false;
-			jitsiClientMuted = true;
-			jitsiRoom = "Lobby";
-			jitsiNickname = loadCookie("user");
-
-			// Add the Jitsi external_api script for our correct domain
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.src = 'https://' + jitsiDomain + '/external_api.js';
-                	document.head.appendChild(script);
-
-			// If Jitsi fails for some reason, that should not block the
-			// text-only connection from being established properly.
-			script.onload = setupJitsi;
+			jitsiRoomPrefix = "";
 		} else {
 			// What do we do for local development?
+			jitsiDomain = "meet.jit.si";
+			jitsiRoomPrefix = "RWOTLocalTesting-"
 		}
+
+		// Add the Jitsi external_api script for our correct domain
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = 'https://' + jitsiDomain + '/external_api.js';
+		document.head.appendChild(script);
+
+		// If Jitsi fails for some reason, that should not block the
+		// text-only connection from being established properly.
+		script.onload = jitsiChangeRoom;
 	}
-	function setupJitsi() {
+
+	// This isn't called until the Jitsi external API script loads
+	function jitsiChangeRoom() {
+		if(jitsiAPI) {
+			jitsiAPI.dispose();
+			jitsiAPI = undefined;
+		}
+
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
 		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
-		    roomName: jitsiRoom,
+		    roomName: jitsiRoomPrefix + jitsiRoom,
 		    width: 200,
 		    height: 200,
 		    parentNode: document.querySelector('#meet'),
-		    configOverwrite: { startAudioOnly: true, startWithAudioMuted: true },
+		    configOverwrite: { startAudioOnly: true, startWithAudioMuted: true, fileRecordingsEnabled: false },
 		    userInfo: {
 		        displayName: jitsiNickname
 		    }
 		};
 		jitsiAPI = new JitsiMeetExternalAPI(jitsiDomain, options);
+		jitsiCurrentRoom = jitsiRoom;
+		document.querySelector("#audio_room").textContent = jitsiRoom;
 		//jitsiAPI.getAvailableDevices().then(devices => updateAudioInputs(devices));
 	}
 
@@ -101,13 +119,24 @@ var parentDisconnected = connDisconnected;
 	//	}
 	//}
 
-	function muteUnmute() {
+	function toggleClientMuted() {
 		jitsiClientMuted = !jitsiClientMuted;
+		muteUnmute();
+	}
+
+	function muteUnmute() {
 		let muteButton = document.querySelector('#mute_button');
 		if(jitsiClientMuted) {
 			muteButton.classList = "muted fas fa-microphone-alt-slash";
 		} else {
 			muteButton.classList = "unmuted fas fa-microphone-alt";
+		}
+
+		let chatIndicator = document.querySelector("#chat_indicator");
+		if(jitsiServerMuted) {
+			chatIndicator.classList = "muted";
+		} else {
+			chatIndicator.classList = "unmuted";
 		}
 
 		if(!jitsiMidMute) {
@@ -188,15 +217,39 @@ var parentDisconnected = connDisconnected;
 		case 70:
 	   		popupWin(msg, "SkotosToolSourceView", 800, 600);
 			break;
+
 		case 80:
-			alert(msg);
-			document.getElementById("right").update(msg);
+			// Set Jitsi room
+			console.log("New Jitsi room: " + msg);
+			if(msg != jitsiRoom) {
+				jitsiRoom = msg;
+				jitsiChangeRoom();
+			}
+			break;
+
+		case 81:
+			// Set Jitsi server-muted
+			if(msg != "true" && msg != "false") {
+				badSkoot(num, msg);
+			} else {
+				console.log("Setting whether Jitsi is server-muted...");
+				jitsiServerMuted = (msg == "true");
+				muteUnmute();
+			}
+			break;
+
+		case 82:
+			// Set Jitsi display name
+			console.log("Setting Jitsi display name:", msg);
+			jitsiAPI.executeCommand("displayName", msg);
+			break;
+
 		default:
-			//badSkoot(num, msg);
+			badSkoot(num, msg);
 		}
 	}
 	function popupMapWindow() {
-			popupArtWin(bigMapHREF, 'Map', 'Lovecraft Country Overview Map');
+			popupArtWin(bigMapHREF, 'Map', 'Gables Overview Map');
 	}
 	function compassArrow(direction) {
 		sendUI('go ' + direction);

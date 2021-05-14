@@ -17,11 +17,21 @@
 	#comp_s  {right:60px;	bottom:12px;}
 	#comp_se {right:1px;	bottom:12px;}
 
+/* The microphone mute button shows whether you have *self*-muted */
 #mute_button.muted: {
 	color: #444;
 }
 
 #mute_button.unmuted {
+	color: #DDD;
+}
+
+/* Chat indicator shows *server* mute/unmute */
+#chat_indicator.muted {
+	color: #444;
+}
+
+#chat_indicator.unmuted {
 	color: #DDD;
 }
 
