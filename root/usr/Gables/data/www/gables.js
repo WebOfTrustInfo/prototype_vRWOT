@@ -1,4 +1,8 @@
 "use strict";
+
+// Save a reference to the original. We'll be redefining it.
+var parentDisconnected = connDisconnected;
+
 //-----Component Setup
 	var bigMapHREF;
 	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI;
@@ -464,10 +468,10 @@
 		artwin.focus();
     }
 
-    var parentDisconnected = connDisconnected;
-    function connDisconnected() {
+    connDisconnected = function connDisconnected {
     	jitsiAPI.dispose();
     	parentDisconnected();
     }
+
 //-----Initialization Code
 	var serverCode = "CM";
