@@ -279,7 +279,9 @@ var parentDisconnected = connDisconnected;
 			console.log("New Jitsi room: " + msg);
 			if(msg != jitsiRoom) {
 				jitsiRoom = msg;
-				jitsiChangeRoom();
+				jitsiReconnect();
+			} else {
+				console.log("(Not changing room since it's the same.)");
 			}
 			break;
 
