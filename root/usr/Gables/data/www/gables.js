@@ -5,7 +5,7 @@ var parentDisconnected = connDisconnected;
 
 //-----Component Setup
 	var bigMapHREF;
-	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAP, jitsiCurrentRoom;
+	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiLoaded, jitsiAPI, jitsiCurrentRoom;
 	var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice, jitsiRoomPrefix;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
@@ -59,11 +59,15 @@ var parentDisconnected = connDisconnected;
 
 		// If Jitsi fails for some reason, that should not block the
 		// text-only connection from being established properly.
-		script.onload = jitsiChangeRoom;
+		script.onload = () => { jitsiLoaded = true; jitsiChangeRoom() };
 	}
 
 	// This isn't called until the Jitsi external API script loads
 	function jitsiChangeRoom() {
+		if(!jitsiLoaded) {
+			return;
+		}
+
 		if(jitsiAPI) {
 			jitsiAPI.dispose();
 			jitsiAPI = undefined;
