@@ -18,20 +18,32 @@
 	#comp_se {right:1px;	bottom:12px;}
 
 /* The microphone mute button shows whether you have *self*-muted */
-#mute_button.muted: {
+.audible #mute_button.muted: {
 	color: #444;
 }
 
-#mute_button.unmuted {
+.audible #mute_button.unmuted {
 	color: #DDD;
 }
 
+.silenced #mute_button.muted: {
+	color: #888;
+}
+
+.silenced #mute_button.unmuted {
+	color: #AAA;
+}
+
+.silenced #chat_indicator {
+	color: #888;
+}
+
 /* Chat indicator shows *server* mute/unmute */
-#chat_indicator.muted {
+.audible #chat_indicator.muted {
 	color: #444;
 }
 
-#chat_indicator.unmuted {
+.audible #chat_indicator.unmuted {
 	color: #DDD;
 }
 
