@@ -468,7 +468,7 @@ var parentDisconnected = connDisconnected;
 		artwin.focus();
     }
 
-    connDisconnected = function connDisconnected {
+    connDisconnected = function() {
     	jitsiAPI.dispose();
     	parentDisconnected();
     }
