@@ -5,13 +5,13 @@ var parentDisconnected = connDisconnected;
 
 //-----Component Setup
     var bigMapHREF;
-    var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiScriptLoaded, jitsiAPI, jitsiCurrentRoom, jitsiSilenced;
-    var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice, jitsiRoomPrefix;
+    var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiScriptLoaded, jitsiAPI, jitsiSilenced;
+    var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice, jitsiChannels, jitsiCalledInit;
     function initTheatre() {
         addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
         addComponent('skotos_logo'    , 'right'   , false);
         addComponent('clientui'       , 'skotos_logo');
-        addComponent('save_button'  , 'clientui', false, 'saveCurrentWindow', [], '<i class="fas fa-file-download"></i>', 'Save Log');
+        addComponent('save_button'    , 'clientui', false, 'saveCurrentWindow', [], '<i class="fas fa-file-download"></i>', 'Save Log');
         addComponent('settings_button', 'clientui', false, 'openSettings', [], '<i class="fas fa-bars"></i>', 'Client Preferences');
         addComponent('newplayersgs'   , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
         addComponent('newplayersmc'   , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
@@ -31,27 +31,19 @@ var parentDisconnected = connDisconnected;
         addComponent('comp_sw', 'right_fill', 'comp_button', 'compassArrow', ['southwest'], false, 'go southwest');
         addComponent('comp_s' , 'right_fill', 'comp_button', 'compassArrow', ['south'],     false, 'go south');
         addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
-
-        initJitsi();
     }
 
     function initJitsi() {
+        jitsiCalledInit = true;
         jitsiScriptLoaded = false;
         jitsiMidMute = false;
         jitsiAddedAudioInputListener = false;
         jitsiServerMuted = false;
         jitsiClientMuted = true;
         jitsiSilenced = false;
-        jitsiRoom = "RWOTLobby";
-        jitsiNickname = loadCookie("user");
 
-        if(window.location.hostname != "localhost") {
+        if(window.location.hostname != "localhost" && !jitsiDomain) {
             jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
-            jitsiRoomPrefix = "";
-        } else {
-            // What do we do for local development?
-            jitsiDomain = "meet.jit.si";
-            jitsiRoomPrefix = "RWOTLocalTesting-"
         }
 
         // Show the current silenced and muted settings in the sidebar
@@ -83,12 +75,17 @@ var parentDisconnected = connDisconnected;
             document.querySelector("#audio_room").textContent = "(none)";
         }
 
-        // Disconnected? Then we're no longer effectively mid-mute.
+        // Disconnecting? Then we're no longer effectively mid-mute.
         jitsiMidMute = false;
 
         // Want to be silent? Just don't reconnect. We don't currently allow send-only.
         if(jitsiSilenced) {
-            console.log("Reconnect: jitsi is silenced, so skip connection.");
+            console.log("Reconnect: jitsi is silenced, so skip connection/reconnection.");
+            return;
+        }
+
+        if(!jitsiRoom || !jitsiToken) {
+            console.log("Reconnect: no room and/or token specified, so don't connect/reconnect.");
             return;
         }
 
@@ -99,13 +96,13 @@ var parentDisconnected = connDisconnected;
             width: 200,
             height: 200,
             parentNode: document.querySelector('#meet'),
-            configOverwrite: { startSilent: jitsiSilenced, startAudioOnly: true, startWithAudioMuted: jitsiClientMuted || jitsiServerMuted, fileRecordingsEnabled: false },
+            configOverwrite: { startSilent: false, startWithAudioMuted: jitsiClientMuted || jitsiServerMuted, fileRecordingsEnabled: false },
+            jwt: jitsiToken,
             userInfo: {
                 displayName: jitsiNickname
             }
         };
         jitsiAPI = new JitsiMeetExternalAPI(jitsiDomain, options);
-        jitsiCurrentRoom = jitsiRoom;
         document.querySelector("#audio_room").textContent = jitsiRoom;
         //jitsiAPI.getAvailableDevices().then(devices => updateAudioInputs(devices));
     }
@@ -275,31 +272,103 @@ var parentDisconnected = connDisconnected;
             break;
 
         case 80:
-            // Set Jitsi room
-            console.log("New Jitsi room: " + msg);
-            if(msg != jitsiRoom) {
-                jitsiRoom = msg;
-                jitsiReconnect();
-            } else {
-                console.log("(Not changing room since it's the same.)");
-            }
-            break;
+            // What will need changing after this message?
+            let doReconnect = false;
+            let doMuteUnmute = false;
 
-        case 81:
-            // Set Jitsi server-muted
-            if(msg != "true" && msg != "false") {
-                badSkoot(num, msg);
+            // Server-sent Jitsi information
+            s = JSON.parse(msg);
+            console.log("New Jitsi settings:", s);
+
+            // Fields not yet set or used: email, avatar.
+
+            // If jitsiDomain wasn't set, this is the first Jitsi SKOOT message.
+            if(!jitsiDomain) {
+                if(!s.domain || !s.name) {
+                    console.log("Internal error: Jitsi SKOOT message must always set jitsi domain and display name!");
+                    badSkoot(num, msg);
+                    break;
+                }
+                jitsiDomain = s.domain;
+                jitsiNickname = s.name;
+                jitsiRoomPrefix = "";
+                if(s.roomPrefix) {
+                    jitsiRoomPrefix = s.roomPrefix;
+                }
+                jitsiServerMuted = (s.muted == "muted");
+
+                // If s.room is false, don't connect to a room (yet?)
+                jitsiRoom = s.room;
+
+                doReconnect = true;
             } else {
-                console.log("Setting whether Jitsi is server-muted...");
-                jitsiServerMuted = (msg == "true");
+                // If it's *not* the first Jitsi SKOOT message, there's a lot we expect not to change.
+
+                // One way Jitsi handles versioning is that the external API script is loaded
+                // from the same Jitsi server. So if we'd switch domains, we have to reload the
+                // script, which means reloading this page.
+                if(s.domain && s.domain != jitsiDomain) {
+                    console.log("Jitsi domain changed", s.domain, jitsiDomain);
+                    alert("Jitsi domain has changed from " + jitsiDomain + " to " + s.domain + "! Please reload this page!");
+                    break;
+                }
+
+                // Jitsi could, in theory, handle this just fine. But it's a very bad sign if this happens.
+                // The server should be assigning us the same Jitsi display name in every channel.
+                if(s.name && s.name != jitsiNickname) {
+                    console.log("Nickname mismatch", s.name, jitsiNickname);
+                    alert("Orchil Jitsi error! Server nickname " + s.name + " changed from nickname " + jitsiNickname + "!");
+                    break;
+                }
+
+                // Jitsi handles this fine, but you still wouldn't expect it to happen.
+                if(s.roomPrefix && s.roomPrefix != jitsiRoomPrefix) {
+                    console.log("Weird! Jitsi room prefix changed", s.roomPrefix, jitsiRoomPrefix);
+                    doReconnect = true;
+                }
+            }
+
+            // Muted is a trinary muted/unmuted/null - if muted is not given, retain the
+            // previous setting.
+            if(s.muted) {
+                if(s.muted != "muted" && s.muted != "unmuted") {
+                    console.log("SKOOT 80 'muted' setting should be 'muted' or 'unmuted'; instead was:", s.muted);
+                    badSkoot(num, msg);
+                    break;
+                }
+
+                newMuted = (s.muted == "muted");
+                if(jitsiServerMuted != newMuted) {
+                    jitsiServerMuted = newMuted;
+                    doMuteUnmute = true;
+                }
+            }
+
+            // The server can specify a new room and token.
+            // If no room is received, stick with the same room and token.
+            // Note that a reconnect isn't guaranteed
+            // to work if our JWT token has expired...
+            if(s.room && s.room != jitsiRoom) {
+                jitsiRoom = s.room;
+                jitsiToken = s.jwt;
+                if(!jitsiToken) {
+                    console.log("Internal error: Server assigned Jitsi room " + jitsiRoom + " but no JWT token!");
+                    badSkoot(num, msg);
+                    break;
+                }
+                doReconnect = true;
+            }
+
+            // Init handles reconnect automatically, reconnect handles mute/unmute.
+            if(!jitsiCalledInit) {
+                // Even if we have no Jitsi room, call init to start loading the external API script.
+                initJitsi();
+            } else if(doReconnect) {
+                jitsiReconnect();
+            } else if (doMuteUnmute) {
                 muteUnmute();
             }
-            break;
 
-        case 82:
-            // Set Jitsi display name
-            console.log("Setting Jitsi display name:", msg);
-            jitsiAPI.executeCommand("displayName", msg);
             break;
 
         default:
@@ -584,4 +653,4 @@ var parentDisconnected = connDisconnected;
     }
 
 //-----Initialization Code
-    var serverCode = "CM";
+    var serverCode = "RWOT";
