@@ -1,15 +1,25 @@
 "use strict";
+
+// Save a reference to the original. We'll be redefining it.
+var parentDisconnected = connDisconnected;
+
 //-----Component Setup
 	var bigMapHREF;
-	var jitsiDomain;
+	var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiScriptLoaded, jitsiAPI, jitsiCurrentRoom, jitsiSilenced;
+	var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice, jitsiRoomPrefix;
 	function initTheatre() {
 		addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
 		addComponent('skotos_logo'    , 'right'   , false);
 		addComponent('clientui'       , 'skotos_logo');
 		addComponent('save_button'  , 'clientui', false, 'saveCurrentWindow', [], '<i class="fas fa-file-download"></i>', 'Save Log');
 		addComponent('settings_button', 'clientui', false, 'openSettings', [], '<i class="fas fa-bars"></i>', 'Client Preferences');
-		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
-		addComponent('newplayers'     , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
+		addComponent('newplayersgs'   , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/starting.sam'], '<div class="button" alt="Getting Started" title="Getting Started">Getting Started</div>');
+		addComponent('newplayersmc'   , 'right'   , false, 'openerWin', ['http://game.gables.chattheatre.com/Theatre/mastering.sam'], '<div class="button" alt="Mastering Chat" title="Mastering Chat">Mastering Chat</div>');
+		addComponent('audio_settings' , 'right'   , false);
+		addComponent('audio_silence'  , 'audio_settings', false, 'toggleSilenced', [], '<div class="button"><i id="silence_button" title="speaker shows whether you are playing audio chat" class="silenced fas fa-volume-mute"></i><span id="silence_indicator">Audio Chat</span></div>')
+		addComponent('audio_mute'     , 'audio_settings', false, 'toggleClientMuted', [], '<div class="button"><i id="mute_button" title="microphone shows whether you have muted yourself" class="muted fas fa-microphone-alt-slash"></i><span id="chat_indicator" title="text color shows whether server has muted you...">Mute/Unmute</span></div>');
+		addComponent('audio_roomtext' , 'audio_settings', false, false, [], '<div class="button">Room: <span id="audio_room"></span</div>');
+		//addComponent('audio_device'     , 'right'   , 'audio_device', false, [], '<select id="audio_input_devices"></div>');
 		addComponent('right_fill'     , 'right'   , 'fill');
 		addComponent('image_map'      , 'right'   , false, 'popupMapWindow', []);
 		addComponent('image_map_img'  , 'image_map', false);
@@ -22,34 +32,184 @@
 		addComponent('comp_s' , 'right_fill', 'comp_button', 'compassArrow', ['south'],     false, 'go south');
 		addComponent('comp_se', 'right_fill', 'comp_button', 'compassArrow', ['southeast'], false, 'go southeast');
 
+		initJitsi();
+	}
+
+	function initJitsi() {
+		jitsiScriptLoaded = false;
+		jitsiMidMute = false;
+		jitsiAddedAudioInputListener = false;
+		jitsiServerMuted = false;
+		jitsiClientMuted = true;
+		jitsiSilenced = false;
+		jitsiRoom = "RWOTLobby";
+		jitsiNickname = loadCookie("user");
+
 		if(window.location.hostname != "localhost") {
 			jitsiDomain = window.location.hostname.replace("rwot.", "meet.");
-
-			// Add the Jitsi external_api script for our correct domain
-			var script = document.createElement('script');
-			script.type = 'text/javascript';
-			script.src = 'https://' + jitsiDomain + '/external_api.js';
-                	document.head.appendChild(script);
-
-			// If Jitsi fails for some reason, that should not block the
-			// text-only connection from being established properly.
-			script.onload = setupJitsi;
+			jitsiRoomPrefix = "";
+		} else {
+			// What do we do for local development?
+			jitsiDomain = "meet.jit.si";
+			jitsiRoomPrefix = "RWOTLocalTesting-"
 		}
+
+		// Show the current silenced and muted settings in the sidebar
+		updateSilencedUI();
+		updateMutedUI();
+
+		// Add the Jitsi external_api script for our correct domain
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = 'https://' + jitsiDomain + '/external_api.js';
+		document.head.appendChild(script);
+
+		// If Jitsi fails for some reason, that should not block the
+		// text-only connection from being established properly.
+		script.onload = () => { jitsiScriptLoaded = true; jitsiReconnect() };
 	}
-	function setupJitsi() {
+
+	// This shouldn't be called until the Jitsi external API script loads
+	function jitsiReconnect() {
+		// Script not loaded? Bail.
+		if(!jitsiScriptLoaded) {
+			return;
+		}
+
+		// Already have a connection? Kill it.
+		if(jitsiAPI) {
+			jitsiAPI.dispose();
+			jitsiAPI = undefined;
+			document.querySelector("#audio_room").textContent = "(none)";
+		}
+
+		// Disconnected? Then we're no longer effectively mid-mute.
+		jitsiMidMute = false;
+
+		// Want to be silent? Just don't reconnect. We don't currently allow send-only.
+		if(jitsiSilenced) {
+			console.log("Reconnect: jitsi is silenced, so skip connection.");
+			return;
+		}
+
 		// Jitsi Setup - for more Jitsi, see: https://jitsi.github.io/handbook/docs/dev-guide/dev-guide-iframe
 		// For list of config options: https://github.com/jitsi/jitsi-meet/blob/master/config.js
 		const options = {
-		    roomName: 'RWOTTesting',
-		    width: 600,
-		    height: 300,
+		    roomName: jitsiRoomPrefix + jitsiRoom,
+		    width: 200,
+		    height: 200,
 		    parentNode: document.querySelector('#meet'),
-		    configOverwrite: { startAudioOnly: true },
+		    configOverwrite: { startSilent: jitsiSilenced, startAudioOnly: true, startWithAudioMuted: jitsiClientMuted || jitsiServerMuted, fileRecordingsEnabled: false },
 		    userInfo: {
-		        displayName: loadCookie("user")
+		        displayName: jitsiNickname
 		    }
 		};
-		const api = new JitsiMeetExternalAPI(jitsiDomain, options);
+		jitsiAPI = new JitsiMeetExternalAPI(jitsiDomain, options);
+		jitsiCurrentRoom = jitsiRoom;
+		document.querySelector("#audio_room").textContent = jitsiRoom;
+		//jitsiAPI.getAvailableDevices().then(devices => updateAudioInputs(devices));
+	}
+
+	//// If you call this yourself, it messes things up. Please don't.
+	//function updateAudioInputs(devices) {
+	//	console.log("Updating audio input device list...");
+	//	var selector = document.querySelector('#audio_input_devices');
+	//	while(selector.options.length > 0) { selector.remove(0); }
+	//	devices.audioInput.forEach(dev => {
+	//		var opt = document.createElement('option');
+	//		opt.value = dev.label;
+	//		opt.title = dev.label;
+	//		if(dev.label.length > 10) {
+	//			opt.text = dev.label.slice(0,9) + "...";
+	//		} else {
+	//			opt.text = dev.label;
+	//		}
+	//		opt.deviceId = dev.deviceId;
+	//		selector.add(opt);
+	//		});
+	//	if(!jitsiAddedAudioInputListener) {
+	//		jitsiAddedAudioInputListener = true;
+	//		selector.addEventListener('change', (event) => {
+	//			console.log("Audio input device selector: changed");
+	//			if(selector.value != jitsiLastAudioDevice) {
+	//				console.log("Setting Jitsi audio input: " + selector.value)
+	//				jitsiAPI.setAudioInputDevice(selector.value);
+	//				jitsiLastAudioDevice = selector.value;
+	//			} else {
+	//				console.log("Audio device not changed from " + jitsiLastAudioDevice + ", not setting...");
+	//			}
+	//		});
+	//	}
+	//}
+
+	function toggleClientMuted() {
+		console.log("toggleClientMuted", jitsiClientMuted);
+		jitsiClientMuted = !jitsiClientMuted;
+		muteUnmute();
+	}
+
+	function toggleSilenced() {
+		console.log("toggleSilenced", jitsiSilenced);
+		jitsiSilenced = !jitsiSilenced;
+
+		updateSilencedUI();
+
+		// Jitsi can't silence/unsilence after loading. So we just connect or not, basically.
+		// It's also possible to keep a Jitsi connection but with no local output. But why?
+		jitsiReconnect();
+	}
+
+	function updateSilencedUI() {
+		let settingsDiv = document.querySelector("#audio_settings");
+		let silenceButton = document.querySelector("#silence_button");
+		if(jitsiSilenced) {
+			settingsDiv.classList = "silenced";
+			silenceButton.classList = "fas fa-volume-mute";
+		} else {
+			settingsDiv.classList = "audible";
+			silenceButton.classList = "fas fa-volume-up";
+		}
+	}
+
+	function updateMutedUI() {
+		let muteButton = document.querySelector('#mute_button');
+		if(jitsiClientMuted) {
+			muteButton.classList = "muted fas fa-microphone-alt-slash";
+		} else {
+			muteButton.classList = "unmuted fas fa-microphone-alt";
+		}
+
+		let chatIndicator = document.querySelector("#chat_indicator");
+		if(jitsiServerMuted) {
+			chatIndicator.classList = "muted";
+		} else {
+			chatIndicator.classList = "unmuted";
+		}
+	}
+
+	function muteUnmute() {
+		updateMutedUI();
+
+		if(jitsiSilenced) {
+			// Silenced normally means disconnected, so don't tell Jitsi whether to mute.
+			return;
+		}
+
+		if(!jitsiMidMute) {
+			jitsiMidMute = true;
+			jitsiAPI.isAudioMuted().then(muted => updateMuteState(muted));
+		}
+	}
+
+	// If you call this yourself, it messes things up. Please don't.
+	function updateMuteState(muted) {
+		jitsiMidMute = false;
+
+		let shouldBeMuted = jitsiServerMuted || jitsiClientMuted;
+
+		if(shouldBeMuted != muted) {
+			jitsiAPI.executeCommand('toggleAudio');
+		}
 	}
 
 	function updateCompass(bitfield, image, dir, bit) {
@@ -113,15 +273,41 @@
 		case 70:
 	   		popupWin(msg, "SkotosToolSourceView", 800, 600);
 			break;
+
 		case 80:
-			alert(msg);
-			document.getElementById("right").update(msg);
+			// Set Jitsi room
+			console.log("New Jitsi room: " + msg);
+			if(msg != jitsiRoom) {
+				jitsiRoom = msg;
+				jitsiReconnect();
+			} else {
+				console.log("(Not changing room since it's the same.)");
+			}
+			break;
+
+		case 81:
+			// Set Jitsi server-muted
+			if(msg != "true" && msg != "false") {
+				badSkoot(num, msg);
+			} else {
+				console.log("Setting whether Jitsi is server-muted...");
+				jitsiServerMuted = (msg == "true");
+				muteUnmute();
+			}
+			break;
+
+		case 82:
+			// Set Jitsi display name
+			console.log("Setting Jitsi display name:", msg);
+			jitsiAPI.executeCommand("displayName", msg);
+			break;
+
 		default:
-			//badSkoot(num, msg);
+			badSkoot(num, msg);
 		}
 	}
 	function popupMapWindow() {
-			popupArtWin(bigMapHREF, 'Map', 'Lovecraft Country Overview Map');
+			popupArtWin(bigMapHREF, 'Map', 'Gables Overview Map');
 	}
 	function compassArrow(direction) {
 		sendUI('go ' + direction);
@@ -392,5 +578,11 @@
 		// Just in case it was already open and not at the foreground.
 		artwin.focus();
     }
+
+    connDisconnected = function() {
+    	jitsiAPI.dispose();
+    	parentDisconnected();
+    }
+
 //-----Initialization Code
 	var serverCode = "CM";
