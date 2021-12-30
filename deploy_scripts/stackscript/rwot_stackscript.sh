@@ -117,13 +117,13 @@ sudo -u skotos -g skotos cp $HTTP_FILE /var/game/usr/HTTP/sys/
 
 # Instance file
 sudo -u skotos -g skotos cat >/var/game/.root/usr/System/data/instance <<EndOfMessage
-portbase 10000
+portbase 11000
 hostname $FQDN_CLIENT
 bootmods DevSys Theatre Jonkichi Tool Generic SMTP Gables
 textport 443
-real_textport 10443
-webport 10803
-real_webport 10080
+real_textport 11443
+webport 11803
+real_webport 11080
 url_protocol https
 access gables
 memory_high 128
@@ -143,9 +143,9 @@ var profiles = {
                 "protocol": "wss",
                 "web_protocol": "https",
                 "server":   "$FQDN_CLIENT",
-                "port":      10810,
-                "woe_port":  10812,
-                "http_port": 10803,
+                "port":      11810,
+                "woe_port":  11812,
+                "http_port": 11803,
                 "path":     "/gables",
                 "extra":    "",
                 "reports":   false,
