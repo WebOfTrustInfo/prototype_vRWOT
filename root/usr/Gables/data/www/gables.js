@@ -5,7 +5,7 @@ var parentDisconnected = connDisconnected;
 
 //-----Component Setup
     var bigMapHREF;
-    var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiClientMuted, jitsiScriptLoaded, jitsiAPI, jitsiSilenced;
+    var jitsiDomain, jitsiNickname, jitsiServerMuted, jitsiRoom, jitsiToken, jitsiClientMuted, jitsiScriptLoaded, jitsiAPI, jitsiSilenced;
     var jitsiMidMute, jitsiAddedAudioInputListener, jitsiLastAudioDevice, jitsiChannels, jitsiCalledInit;
     function initTheatre() {
         addComponent('chat_theatre'   , 'left'    , false, 'openerWin', ['http://game.gables.chattheatre.com/'], '<img alt="Grand Theatre" src="http://images.gables.chattheatre.com/gamelogo.jpg">');
@@ -278,13 +278,14 @@ var parentDisconnected = connDisconnected;
             let doMuteUnmute = false;
 
             // Server-sent Jitsi information
-            s = JSON.parse(msg);
+            var s = JSON.parse(msg);
             console.log("New Jitsi settings:", s);
 
             // Fields not yet set or used: email, avatar.
 
             // If jitsiDomain wasn't set, this is the first Jitsi SKOOT message.
             if(!jitsiDomain) {
+                console.log("First Jitsi message - initialising Jitsi...")
                 if(!s.domain || !s.name) {
                     console.log("Internal error: Jitsi SKOOT message must always set jitsi domain and display name!");
                     badSkoot(num, msg);
@@ -298,8 +299,9 @@ var parentDisconnected = connDisconnected;
                 }
                 jitsiServerMuted = (s.muted == "muted");
 
-                // If s.room is false, don't connect to a room (yet?)
+                // If s.room is undefined, don't connect to a room (yet?)
                 jitsiRoom = s.room;
+                jitsiToken = s.jwt;
 
                 doReconnect = true;
             } else {
@@ -350,6 +352,7 @@ var parentDisconnected = connDisconnected;
             // Note that a reconnect isn't guaranteed
             // to work if our JWT token has expired...
             if(s.room && s.room != jitsiRoom) {
+                //console.log("Setting room and token...", s.room, s.jwt);
                 jitsiRoom = s.room;
                 jitsiToken = s.jwt;
                 if(!jitsiToken) {
